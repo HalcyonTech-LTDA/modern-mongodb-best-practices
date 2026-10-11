@@ -79,6 +79,7 @@ Guides connection pooling, replica set consistency concerns, transactions, secur
 
 #### 🚀 `modern-mongodb-migrations-and-lifecycle`
 Guides database evolution, `migrate-mongo` craftsmanship, distributed locking, zero-downtime batching, and living runbooks:
+- `examples/sample_migration.js`: Production-grade idempotent migration script blueprint with index checking and memory-safe batched `bulkWrite` backfilling.
 - `references/migrate_mongo_architecture_and_scripts.md`: `migrate-mongo` configuration, dynamic zero-secret environment variables, `lockTtl` configuration trap, idempotent `up` and `down` script anatomy, and distributed locking (`changelog_lock`).
 - `references/zero_downtime_migration_strategies.md`: The three-phase Expand/Contract pattern, online index builds, and cursor streaming with batched `bulkWrite` avoiding lock contention and OOM.
 - `references/migration_living_readme_runbook.md`: The mandatory living runbook standard, required sections, complete production-ready template blueprint, and atomic PR synchronization checklist.
@@ -114,6 +115,8 @@ modern-mongodb-best-practices/
     │       └── transactions_consistency_and_concerns.md
     └── modern-mongodb-migrations-and-lifecycle/
         ├── SKILL.md
+        ├── examples/
+        │   └── sample_migration.js
         └── references/
             ├── containerized_migration_orchestration.md
             ├── migrate_mongo_architecture_and_scripts.md

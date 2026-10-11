@@ -35,6 +35,7 @@ fallback to old field.                                   field is pruned from DB
 ## 2. High-Volume Batching with Cursor Streaming & `bulkWrite`
 
 ### Anti-Pattern: Memory Exhaustion with `find().toArray()`
+```javascript
 // ANTIPATTERN: Will crash Node.js process if collection has 500,000 documents!
 async function badMigration(db) {
   const allDocs = await db.collection('orders').find({}).toArray();
