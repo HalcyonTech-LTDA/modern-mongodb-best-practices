@@ -13,71 +13,20 @@ When architecting, querying, indexing, configuring, containerizing, or migrating
 
 | When working on... | Consult & Activate Skill | Key Focus Areas |
 | :--- | :--- | :--- |
-| **Schema Design & Data Modeling** | `modern-mongodb-data-modeling` | Embedding vs referencing trade-offs, document growth boundaries (16MB limit), advanced schema patterns (Bucket, Subset, Polymorphic, Attribute, Extended Reference, Schema Versioning), declarative `$jsonSchema` validation, and strict BSON typing (`Decimal128`, UTC `Date`, standard UUIDs). |
-| **Indexing & Query Performance** | `modern-mongodb-indexing-and-queries` | Compound indexing and the ESR Rule (Equality, Sort, Range), covered queries (`totalDocsExamined: 0`), partial and TTL indexes, wildcard indexing, hidden indexes for safe migration, diagnostic profiling (`explain("executionStats")`), `COLLSCAN` elimination, and aggregation pipeline optimization. |
-| **Resilience, Topology & Operations** | `modern-mongodb-resilience-and-ops` | Singleton `MongoClient` lifecycle, connection pool sizing, write concerns (`w: "majority"`, `j: true`), read concerns (`majority`, linearizable), causal consistency sessions, multi-document ACID transactions with transient error retries, container healthchecks, and RBAC least privilege. |
-| **Migrations, Schema Evolution & Runbooks** | `modern-mongodb-migrations-and-lifecycle` | Declarative migration lifecycle with `migrate-mongo`, dynamic zero-secret configuration, distributed mutual exclusion locks (`changelog_lock`), zero-downtime Expand/Contract patterns, batched cursor `bulkWrite` execution, containerized migration runners, and the **mandatory dedicated `README.md` living runbook**. |
+| **Schema Design & Data Modeling** | `modern-mongodb-data-modeling` | Embedding vs referencing trade-offs, 16MB document limit boundaries, design patterns, declarative `$jsonSchema` validation, and strict BSON typing. |
+| **Indexing & Query Performance** | `modern-mongodb-indexing-and-queries` | Compound indexing and ESR Rule (Equality, Sort, Range), covered queries, diagnostic profiling (`explain("executionStats")`), and `COLLSCAN` elimination. |
+| **Resilience, Topology & Operations** | `modern-mongodb-resilience-and-ops` | Singleton `MongoClient` lifecycle, connection pooling, majority write/read concerns, causal consistency, and multi-document ACID transactions. |
+| **Migrations, Schema Evolution & Runbooks** | `modern-mongodb-migrations-and-lifecycle` | Versioned migrations with `migrate-mongo`, distributed locking (`changelog_lock`), zero-downtime Expand/Contract, and living `README.md` runbooks. |
 
 ---
 
 ## Non-Negotiable Guardrails (Absolute Invariants)
 
-1. **Mandatory Declarative Collection Schema Validation (`$jsonSchema`)**:
-   - Every production collection MUST define server-side schema validation using `$jsonSchema` with `validationLevel: "strict"` and `validationAction: "error"`.
-   - Never rely solely on application-layer or ORM/ODM validations (Mongoose, Spring Data) to safeguard data integrity.
-   - Schema modifications must be applied deterministically through versioned migrations via `collMod`.
-
-2. **Strict BSON Data Typing & Financial Precision**:
-   - Never store currency or precise decimals as floating-point `Double`; mandate BSON `Decimal128` or minor-unit integers.
-   - Store all dates and timestamps as native BSON `Date` objects in UTC; never use formatted strings.
-   - Store UUIDs with standard BSON binary representation (`uuidRepresentation: 'standard'`) or explicit strings.
-
-3. **Anti-Pattern Ban: Unbounded Document Growth & Inlined Array Bloat**:
-   - Never allow documents or inlined arrays to grow without an upper bound (the 16MB BSON limit).
-   - For 1:N relationships where N exceeds 100 or grows continuously, mandate the **Bucket Pattern**, **Subset Pattern**, or explicit referencing (`foreignField`).
-
-4. **The Golden ESR Rule (Equality, Sort, Range) for Compound Indexes**:
-   - Order compound index keys strictly by ESR: **E**quality fields first, **S**ort fields second, **R**ange/inequality fields last.
-   - Multi-field sort directions must match the index order or its inverse; compound indexes must contain at most one array field.
-   - Maximize covered queries (`totalDocsExamined: 0`) on latency-critical paths by projecting only indexed fields.
-
-5. **Diagnostic Profiling & Elimination of Production `COLLSCAN`**:
-   - Never deploy unindexed collection scans (`COLLSCAN`) on production collections with > 1,000 documents; validate queries with `explain("executionStats")`.
-   - Eliminate in-memory sort spills (`hasSortStage: true` without index backing) to avoid 100MB RAM exhaustion errors.
-   - Absolute ban on unindexed leading-wildcard regular expressions (`/.*search/`) and arbitrary JavaScript execution via `$where`.
-
-6. **Resilient Connection Pooling & Majority Concerns**:
-   - Instantiate `MongoClient` as a process-wide singleton; never open connections per request or function call.
-   - Bound connection pools (`maxPoolSize: 50-100`, `maxConnecting: 2-5`) to prevent connection storms.
-   - Production mutations MUST use write concern `w: "majority"` with `j: true`; use `readConcern: "majority"` and causal consistency for critical reads.
-
-7. **Multi-Document ACID Transactions vs. Single-Document Atomicity**:
-   - Model document schemas to maximize single-document atomicity; reserve multi-document transactions (`session.withTransaction`) strictly for cross-collection business invariants.
-   - Transactional blocks must implement automatic retry loops for `TransientTransactionError` and `UnknownTransactionCommitResult`.
-
-8. **Automated & Idempotent Migrations with `migrate-mongo`**:
-   - Automate database evolution with versioned, sequential migration scripts exporting idempotent `up(db, client)` and `down(db, client)` functions.
-   - Enforce distributed mutual exclusion via `lockCollectionName: "changelog_lock"` with a positive TTL (e.g. `lockTtl: 300`).
-   - Absolute ban on `lockTtl: 0`, which silently disables distributed locking entirely.
-
-9. **Zero-Downtime Migration Choreography (Expand/Contract & Batching)**:
-   - High-traffic schema changes must follow the Expand/Contract (Parallel Run) pattern across deployment phases.
-   - Historical data backfills must use streaming cursors (`cursor.batchSize(500)`) and unordered `bulkWrite`; never load collections with `find().toArray()`.
-   - Build production indexes online or via rolling replica builds before querying against them.
-
-10. **Mandatory Dedicated `README.md` Living Runbook for Migrations**:
-    - Every directory housing migration scripts (e.g., `migrations/`) MUST maintain an up-to-date `README.md` documenting architecture, migrations catalog matrix, CLI/Docker recipes, environment contracts, and rollbacks.
-    - Synchronize this `README.md` within the exact same atomic commit whenever migrations, schemas, or indexes change.
-
-11. **Zero Hardcoded Secrets & Dynamic Environment Decoupling**:
-    - Never commit connection strings, credentials, or fallback database names in `migrate-mongo-config.js` or source code.
-    - Configuration files MUST resolve credentials dynamically at runtime via environment variables (`MIGRATE_MONGO_URI`, `MONGODB_URI`) and supply a documented `.env.example`.
-
-12. **Containerized Migration Execution & Healthcheck Orchestration**:
-    - Containerize migrations using dedicated minimal Dockerfiles (`Dockerfile.migrate-mongo`) running as unprivileged users.
-    - Declare operational MongoDB healthchecks in `compose.yaml` via `mongosh` (`test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]`).
-    - Dependents must declare `condition: service_healthy` for MongoDB and `condition: service_completed_successfully` for migration runners before application startup.
-
----
+1. **Declarative Server-Side Validation (`$jsonSchema`)**: Production collections must enforce server-side validation via `$jsonSchema` with strict levels. Do not rely solely on application-layer ORM/ODM validations.
+2. **Strict BSON Typing & Bounded Document Growth**: Prohibit floating-point representations for currency (mandate `Decimal128` or minor units) and store timestamps as native UTC `Date`. Enforce document growth boundaries (16MB limit) using the Bucket, Subset, or referencing patterns.
+3. **The ESR Rule & Production `COLLSCAN` Elimination**: Compound index keys must strictly follow the ESR sequence (Equality, Sort, Range). Prohibit unindexed collection scans (`COLLSCAN`), in-memory sort spills, and unindexed leading-wildcard regular expressions on production collections.
+4. **Singleton Pooling & Majority Resilience**: Instantiate `MongoClient` as a bounded process-wide singleton. Production write mutations must specify `w: "majority"` with journal acknowledgement (`j: true`). Reserve multi-document ACID transactions strictly for cross-collection business invariants.
+5. **Idempotent Migrations & Zero-Downtime Lifecycle**: Schema transformations must be orchestrated via versioned `migrate-mongo` scripts with distributed locking (`changelog_lock`). Apply high-traffic schema evolutions using the Expand/Contract pattern with batched cursor processing.
+6. **Zero Secrets, Container Healthchecks & Dedicated Living Runbook**: Connection URIs and credentials must be resolved dynamically via environment variables. Automated setups must orchestrate container healthchecks via `mongosh`. Every directory housing migrations must maintain and atomically synchronize a dedicated living `README.md` runbook.
 
 Consult the corresponding specialized skills for comprehensive architectural patterns, code blueprints, configuration templates, and testing runbooks.
