@@ -6,6 +6,8 @@ An Antigravity plugin providing automated engineering guardrails, architectural 
 
 ## Installation
 
+### Antigravity
+
 Install directly in Antigravity via the CLI:
 
 ```bash
@@ -17,6 +19,17 @@ Verify that the plugin is installed and ready:
 ```bash
 agy plugin list
 ```
+
+### Claude Code
+
+Add the Halcyon Tech marketplace once, then install the plugin:
+
+```text
+/plugin marketplace add HalcyonTech-LTDA/halcyon-plugins
+/plugin install modern-mongodb-best-practices@halcyon-plugins
+```
+
+Skills are namespaced by plugin in Claude Code (`/modern-mongodb-best-practices:<skill-name>`). The guardrails in `rules/` load through the skills in `claude/skills/`.
 
 ---
 ## Overview
