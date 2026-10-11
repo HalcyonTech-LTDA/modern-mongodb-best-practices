@@ -41,7 +41,7 @@ This plugin establishes modern, production-grade engineering standards for Mongo
 
 ## What's Included
 
-### 1. Automatic Guardrails (`rules/AGENTS.md`)
+### 1. Automatic Guardrails (`rules/modern-mongodb-engineering.md`)
 Automatically enforced across all projects utilizing MongoDB:
 - **Declarative Collection Schema Validation (`$jsonSchema`)**: Mandatory collection-level schema validation with `validationLevel: "strict"` and `validationAction: "error"`.
 - **Strict BSON Data Typing Hygiene**: Absolute ban on floating-point `Double` for currency (mandate `Decimal128`), ban on string dates (mandate BSON UTC `Date`), and standardized UUID representation.
@@ -94,7 +94,7 @@ modern-mongodb-best-practices/
 ├── plugin.json
 ├── README.md
 ├── rules/
-│   └── AGENTS.md
+│   └── modern-mongodb-engineering.md
 └── skills/
     ├── modern-mongodb-data-modeling/
     │   ├── SKILL.md
