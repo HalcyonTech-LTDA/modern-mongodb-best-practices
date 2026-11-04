@@ -1,5 +1,20 @@
 {
   "$schema": "https://antigravity.google/schemas/v1/plugin.json",
   "name": "modern-mongodb-best-practices",
-  "description": "Professional modern MongoDB engineering best practices covering schema design & data modeling, compound indexing & query performance (ESR rule, explain plans), high availability & connection pooling, zero-downtime database migrations with migrate-mongo, and mandatory living README.md runbook documentation discipline."
+  "description": "Professional modern MongoDB engineering best practices covering schema design & data modeling, compound indexing & query performance (ESR rule, explain plans), high availability & connection pooling, zero-downtime database migrations with migrate-mongo, and mandatory living README.md runbook documentation discipline.",
+  "displayName": "Modern Mongodb Best Practices",
+  "version": "1.0.0",
+  "author": {
+    "name": "Halcyon Tech",
+    "url": "https://github.com/HalcyonTech-LTDA"
+  },
+  "homepage": "https://github.com/HalcyonTech-LTDA/modern-mongodb-best-practices",
+  "repository": "https://github.com/HalcyonTech-LTDA/modern-mongodb-best-practices",
+  "license": "MIT",
+  "logo": "assets/logo.svg",
+  "suggestedPrompts": [
+    "Optimize MongoDB schema design, indexing strategies, and aggregation pipelines",
+    "Audit MongoDB queries for performance and explain plan optimization",
+    "Configure production-ready connection pools, retryable writes, and transactions"
+  ]
 }
