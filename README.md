@@ -1,37 +1,39 @@
-# Modern MongoDB Best Practices Plugin
+<div align="center">
 
-An Antigravity plugin providing automated engineering guardrails, architectural patterns, indexing disciplines, connection resilience standards, zero-downtime database migrations with [**migrate-mongo**](https://www.npmjs.com/package/migrate-mongo), and the **mandatory living `README.md` runbook documentation discipline** for modern MongoDB (6.0+, 7.0+, 8.0+).
+# Modern Mongodb Best Practices Plugin
+### High-Performance Schema Design, Indexing Strategy & Production Guardrails
+
+[![Antigravity Plugin](https://img.shields.io/badge/Antigravity-Plugin%20v1.0.0-4F46E5.svg)](https://antigravity.google)
+[![License: MIT](https://img.shields.io/badge/License-MIT-10B981.svg)](./LICENSE)
+[![Organization](https://img.shields.io/badge/Organization-HalcyonTech--LTDA-black.svg)](https://github.com/HalcyonTech-LTDA)
+
+<p align="center">
+  <b>Professional modern MongoDB engineering best practices covering schema design & data modeling, compound indexing & query performance (ESR rule, explain plans), high availability & connection pooling, zero-downtime database migrations with migrate-mongo, and mandatory living README.md runbook documentation discipline.</b>
+</p>
+
+</div>
 
 ---
 
-## Installation
+## Installation & Verification
 
-### Antigravity
+### Antigravity CLI (`agy`)
 
-Install directly in Antigravity via the CLI:
+Install directly into your Antigravity environment via the CLI:
 
 ```bash
 agy plugin install https://github.com/HalcyonTech-LTDA/modern-mongodb-best-practices
 ```
 
-Verify that the plugin is installed and ready:
+Verify that the plugin is active and adheres to the strict official schema:
 
 ```bash
 agy plugin list
+agy plugin validate --strict ./modern-mongodb-best-practices
 ```
-
-### Claude Code
-
-Add the Halcyon Tech marketplace once, then install the plugin:
-
-```text
-/plugin marketplace add HalcyonTech-LTDA/halcyon-plugins
-/plugin install modern-mongodb-best-practices@halcyon-plugins
-```
-
-Skills are namespaced by plugin in Claude Code (`/modern-mongodb-best-practices:<skill-name>`). The guardrails in `rules/` load through the skills in `claude/skills/`.
 
 ---
+
 ## Overview
 
 In modern cloud-native systems, microservices, and distributed applications, MongoDB is frequently chosen for its flexible document model, horizontal scalability, and developer velocity. However, without strict architectural discipline, MongoDB implementations often deteriorate into critical production failure modes:
@@ -52,94 +54,60 @@ This plugin establishes modern, production-grade engineering standards for Mongo
 
 ---
 
-## What's Included
+---
 
-### 1. Automatic Guardrails (`rules/modern-mongodb-engineering.md`)
-Automatically enforced across all projects utilizing MongoDB:
-- **Declarative Collection Schema Validation (`$jsonSchema`)**: Mandatory collection-level schema validation with `validationLevel: "strict"` and `validationAction: "error"`.
-- **Strict BSON Data Typing Hygiene**: Absolute ban on floating-point `Double` for currency (mandate `Decimal128`), ban on string dates (mandate BSON UTC `Date`), and standardized UUID representation.
-- **Anti-Pattern Ban: Unbounded Document Growth**: Prohibiting unbounded arrays in favor of the Bucket Pattern, Subset Pattern, or 1:Many referencing.
-- **The Golden ESR Rule (Equality, Sort, Range)**: Mandatory compound index ordering (Equality first, Sort second, Range last), sort direction collinearity (matching index order or inverse to avoid in-memory sorts), and absolute ban on parallel multikey arrays.
-- **Elimination of Production `COLLSCAN`**: Mandatory query profiling with `explain("executionStats")` and zero tolerance for unindexed full collection scans on large datasets.
-- **Resilient Connection Pooling & Majority Concerns**: Singleton `MongoClient` lifecycle, connection pool bounds (`maxPoolSize`, `maxConnecting`), `w: "majority"`, and `readConcern: "majority"`.
-- **Selective Multi-Document Transactions**: Maximizing single-document atomicity and using `withTransaction` retry loops solely for cross-collection business invariants.
-- **Automated & Versioned Database Migrations with `migrate-mongo`**: Declarative, sequential, timestamped migration scripts (`up` and `down`) with distributed mutual exclusion locks and absolute ban on `lockTtl: 0` (which disables locking).
-- **Zero-Downtime Migration Choreography**: The Expand/Contract pattern, online index creation, and cursor streaming with batched `bulkWrite`.
-- **Mandatory Dedicated `README.md` Living Runbook**: Absolute mandate requiring any directory housing migration scripts (e.g. `migrate-mongo/`) to maintain an up-to-date living runbook synchronized in every PR.
-- **Zero Hardcoded Secrets & Dynamic Environment Decoupling**: Dynamic environment variable injection without insecure fallback defaults.
-- **Containerized Migration Execution & Healthcheck Orchestration**: Hardened migration containers (`Dockerfile.migrate-mongo`) and Compose Spec choreography with `condition: service_healthy` and `condition: service_completed_successfully`.
+## What's Included (Component Catalog)
+
+### Contextual Rules (`rules/`)
+Automatically loaded to govern and protect project contexts:
+- **[`modern-mongodb-engineering.md`](rules/modern-mongodb-engineering.md)**: >-
+
+### Procedural Skills (`skills/`)
+On-demand actionable workflows and runbooks:
+- **[`/modern-mongodb-data-modeling`](skills/modern-mongodb-data-modeling/SKILL.md)**: Use this skill when designing, reviewing, or refactoring MongoDB schemas and document models: embedding vs referencing trade-offs, 16MB document limit boundaries, unbounded array prevention, advanced schema design patterns (Bucket, Subset, Polymorphic, Attribute, Extended Reference, Schema Versioning), declarative JSON Schema validation ($jsonSchema), and strict BSON data typing hygiene (Decimal128, Date, UUID).
+- **[`/modern-mongodb-indexing-and-queries`](skills/modern-mongodb-indexing-and-queries/SKILL.md)**: Use this skill when designing indexes or optimizing queries and aggregations in MongoDB: compound indexes and the ESR Rule (Equality, Sort, Range), covered queries, partial & TTL indexes, hidden indexes for safe deprecation, explain("executionStats") diagnostics, COLLSCAN elimination, and aggregation pipeline performance optimization.
+- **[`/modern-mongodb-migrations-and-lifecycle`](skills/modern-mongodb-migrations-and-lifecycle/SKILL.md)**: Use this skill when managing database schema evolution, indexes, data transformations, or migrations in MongoDB: migrate-mongo package architecture, dynamic zero-secret configuration, idempotent up/down scripts, distributed mutual exclusion locking, zero-downtime Expand/Contract patterns, batched cursor bulkWrite processing, containerized migration execution, and the mandatory dedicated living README.md runbook documentation discipline.
+- **[`/modern-mongodb-resilience-and-ops`](skills/modern-mongodb-resilience-and-ops/SKILL.md)**: Use this skill when configuring connection pooling, high-availability topology, read/write concerns, multi-document ACID transactions, security & RBAC, or Docker container healthchecks in MongoDB: singleton MongoClient, majority concerns, causal consistency, transient error retry loops, mongosh healthcheck choreography, and TLS/SCRAM hardening.
 
 ---
 
-### 2. Specialized Skills (`skills/`)
-
-#### 🧱 `modern-mongodb-data-modeling`
-Guides schema design, embedding vs referencing trade-offs, advanced modeling patterns, and BSON typing:
-- `references/schema_design_and_patterns.md`: Cardinality matrix (1:1, 1:Few, 1:Many, 1:Squillions), production patterns (Subset, Bucket, Native Time Series Collections, Extended Reference, Attribute, Polymorphic, Schema Versioning), and anti-patterns.
-- `references/json_schema_validation_and_types.md`: Server-side `$jsonSchema` validators, BSON type taxonomy (`decimal`, `date`, `binData`), validation levels (`strict`/`error`), and dynamic evolution via `collMod`.
-
-#### ⚡ `modern-mongodb-indexing-and-queries`
-Guides compound index architecture, query optimization, explain plan diagnostics, and aggregation pipelines:
-- `references/compound_indexing_and_esr_rule.md`: The ESR Rule in depth, sort direction collinearity, parallel multikey array restrictions, avoiding in-memory sort spills, index prefix deduplication, partial indexes, TTL indexes, wildcard indexes, and hidden indexes.
-- `references/query_optimization_and_explain_plans.md`: Analyzing `explain("executionStats")`, identifying `COLLSCAN` vs `IXSCAN`, achieving covered queries (`totalDocsExamined: 0`), and database profiling (`system.profile`).
-- `references/aggregation_pipeline_craftsmanship.md`: Aggregation stage sequencing, early predicate pushdown, the 100MB stage RAM limit, top-k heapsort coalescence, `$setWindowFields` analytic windows, and index-backed `$lookup` joins.
-
-#### 🛡️ `modern-mongodb-resilience-and-ops`
-Guides connection pooling, replica set consistency concerns, transactions, security, and container healthchecks:
-- `references/connection_pooling_and_topology.md`: Singleton `MongoClient` pattern, connection pool tuning (`maxPoolSize`, `minPoolSize`, `maxConnecting` connection storm defense), socket and network discovery timeouts, and DNS seedlists (`mongodb+srv`).
-- `references/transactions_consistency_and_concerns.md`: Write concern durability (`w: "majority"`, `j: true`), read concern isolation levels, causal consistency client sessions, and multi-document ACID transactions.
-- `references/security_and_container_healthchecks.md`: RBAC least privilege, application-specific roles, TLS/SSL encryption, Docker container healthcheck recipes (`mongosh --eval "db.adminCommand('ping')"`), and Compose Spec service orchestration.
-
-#### 🚀 `modern-mongodb-migrations-and-lifecycle`
-Guides database evolution, `migrate-mongo` craftsmanship, distributed locking, zero-downtime batching, and living runbooks:
-- `examples/sample_migration.js`: Production-grade idempotent migration script blueprint with index checking and memory-safe batched `bulkWrite` backfilling.
-- `references/migrate_mongo_architecture_and_scripts.md`: `migrate-mongo` configuration, dynamic zero-secret environment variables, `lockTtl` configuration trap, idempotent `up` and `down` script anatomy, and distributed locking (`changelog_lock`).
-- `references/zero_downtime_migration_strategies.md`: The three-phase Expand/Contract pattern, online index builds, and cursor streaming with batched `bulkWrite` avoiding lock contention and OOM.
-- `references/migration_living_readme_runbook.md`: The mandatory living runbook standard, required sections, complete production-ready template blueprint, and atomic PR synchronization checklist.
-- `references/containerized_migration_orchestration.md`: Hardened `Dockerfile.migrate-mongo`, Compose Spec choreography, Taskfile/Makefile runners with Docker fallback, and CI/CD quality gates.
-
----
-
-## Directory Layout
+## Directory Hierarchy
 
 ```text
 modern-mongodb-best-practices/
-├── plugin.json
-├── README.md
-├── rules/
+├── plugin.json              # Official Antigravity manifest (schema v1)
+├── LICENSE                  # MIT License (Copyright 2026 HalcyonTech LTDA)
+├── .gitignore               # System ignores & installed_version.json exclusions
+├── .gitattributes           # Deterministic line endings (* text=auto eol=lf)
+├── README.md                # Golden Standard documentation & runbook
+├── assets/
+│   └── logo.svg             # Official Halcyon Tech corporate vector symbol
+├── rules/                   # Contextual rules discovered automatically
 │   └── modern-mongodb-engineering.md
-└── skills/
-    ├── modern-mongodb-data-modeling/
-    │   ├── SKILL.md
-    │   └── references/
-    │       ├── json_schema_validation_and_types.md
-    │       └── schema_design_and_patterns.md
-    ├── modern-mongodb-indexing-and-queries/
-    │   ├── SKILL.md
-    │   └── references/
-    │       ├── aggregation_pipeline_craftsmanship.md
-    │       ├── compound_indexing_and_esr_rule.md
-    │       └── query_optimization_and_explain_plans.md
-    ├── modern-mongodb-resilience-and-ops/
-    │   ├── SKILL.md
-    │   └── references/
-    │       ├── connection_pooling_and_topology.md
-    │       ├── security_and_container_healthchecks.md
-    │       └── transactions_consistency_and_concerns.md
-    └── modern-mongodb-migrations-and-lifecycle/
-        ├── SKILL.md
-        ├── examples/
-        │   └── sample_migration.js
-        └── references/
-            ├── containerized_migration_orchestration.md
-            ├── migrate_mongo_architecture_and_scripts.md
-            ├── migration_living_readme_runbook.md
-            └── zero_downtime_migration_strategies.md
+├── skills/                  # Actionable procedural skills (Progressive Disclosure)
+│   └── modern-mongodb-data-modeling/
+│       └── SKILL.md
+│   └── modern-mongodb-indexing-and-queries/
+│       └── SKILL.md
+│   └── modern-mongodb-migrations-and-lifecycle/
+│       └── SKILL.md
+│   └── modern-mongodb-resilience-and-ops/
+│       └── SKILL.md
 ```
 
 ---
 
-## License
+## 💡 Prompt Recipes & Use Cases
 
-This project is licensed under the [MIT License](LICENSE) - see the LICENSE file for details.
-Copyright (c) 2026 Halcyon Tech.
+```markdown
+- "Optimize MongoDB schema design, indexing strategies, and aggregation pipelines"
+- "Audit MongoDB queries for performance and explain plan optimization"
+- "Configure production-ready connection pools, retryable writes, and transactions"
+```
+
+---
+
+## 📄 License & Corporate Governance
+
+Distributed under the **MIT License**. Copyright (c) 2026 **HalcyonTech LTDA**.  
+Engineered with precision and excellence by [Halcyon Tech](https://github.com/HalcyonTech-LTDA).
